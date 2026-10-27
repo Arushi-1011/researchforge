@@ -322,20 +322,6 @@ npm run build
 
 ---
 
-## 📄 Resume Bullet Points (Copy & Paste Ready)
-
-### For Full-Stack / Backend Engineering Roles (Stripe, Meta, Datadog):
-> - **Architected an enterprise research intelligence platform** in FastAPI and React 18 / TypeScript, designing a layered architecture (`routers → services → repositories`) with strict `import-linter` boundary validation.
-> - **Engineered zero-trust RBAC and session security**, implementing short-lived JWTs alongside SHA-256 hashed refresh tokens with instant revocation and thread-safe sliding-window rate limiting.
-> - **Implemented structured distributed tracing** via Starlette ASGI middleware with ISO-8601 UTC logging and context-propagated `request_id` (`ContextVar`), achieving sub-1.5s production bundle builds and 100% type coverage.
-
-### For Quant Systems / Trading Platform Roles (Citadel, Two Sigma, D.E. Shaw):
-> - **Engineered a high-performance quantitative literature portfolio engine**, applying financial time-series techniques to academic corpora, including centered rolling-window velocity momentum ($z$-scores) and factor-weighted health scoring.
-> - **Vectorized pairwise cosine similarity matrices** using L2-normalized TF-IDF term embeddings, calculating over **31,000 pairwise dot products in $<8\text{ms}$** to detect research redundancy versus portfolio diversification.
-> - **Designed deterministic compilation pipelines** generating structured research reports (HTML, DOCX, WeasyPrint PDF) and semantic ranking with fallback from pgvector to term-hashed vectors.
-
----
-
 ## 📜 License
 
 Distributed under the [MIT License](LICENSE).
