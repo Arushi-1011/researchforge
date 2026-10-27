@@ -73,14 +73,16 @@ def run_benchmark() -> None:
 
         # Benchmark 3: Composite Portfolio Scoring
         t0 = time.perf_counter()
-        metrics = research_portfolio_metrics(corpus)
+        _ = research_portfolio_metrics(corpus)
         t_score = (time.perf_counter() - t0) * 1000.0
+
+        throughput = int(pairs / (mean_ms / 1000.0)) if mean_ms > 0 else 0
 
         print(
             f"Corpus: {n:3d} papers ({pairs:5d} pairwise dot-products) | "
             f"Matrix Latency: {mean_ms:6.2f} ms (p95: {p95_ms:6.2f} ms) | "
             f"Momentum: {t_vel:4.2f} ms | "
-            f"Portfolio Score: {metrics.get('composite_score', 0):4.1f}/100"
+            f"Throughput: {throughput:8,d} pairs/s"
         )
 
     print("-" * 72)

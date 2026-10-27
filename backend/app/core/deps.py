@@ -26,3 +26,10 @@ async def require_owner(project_id:UUID,user:User,db:AsyncSession)->Project:
  if membership is None or membership.role!="OWNER":
   raise HTTPException(403,"Only project owners can perform this action.")
  return project
+
+async def require_editor(project_id:UUID,user:User,db:AsyncSession)->Project:
+ project=await get_project_for_member(project_id,user,db)
+ membership=(await db.execute(select(ProjectMember).where(ProjectMember.project_id==project_id,ProjectMember.user_id==user.id))).scalar_one_or_none()
+ if membership is None or membership.role not in ("OWNER", "EDITOR"):
+  raise HTTPException(403,"Viewers have read-only access to this workspace.")
+ return project

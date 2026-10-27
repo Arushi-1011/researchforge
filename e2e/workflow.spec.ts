@@ -10,7 +10,7 @@ test.describe('ResearchForge End-to-End Workflow', () => {
     await expect(page.getByText('Rigorous research.')).toBeVisible();
 
     // 3. One-click demo authentication
-    const demoButton = page.getByRole('button', { name: /Instant Guest Recruiter Demo/i });
+    const demoButton = page.getByRole('button', { name: /Guest Demo/i });
     await expect(demoButton).toBeVisible();
     await demoButton.click();
 

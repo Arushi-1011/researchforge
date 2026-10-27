@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
 from app.core.deps import get_current_user, get_project_for_member
 from app.core.ratelimit import ai_limiter
+from app.modules.ai.embeddings import semantic_rank_chunks
 from app.modules.users.models import User
 from app.modules.library.models import LibraryPaper
 from app.modules.analysis.models import ResearchGap
@@ -205,7 +206,7 @@ async def ask_papers(project_id: uuid.UUID, data: QuestionIn,
             if score and sentence:
                 chunks.append({"paper_id": str(paper.id), "title": paper.title, "excerpt": sentence[:1200], "term_overlap": score})
     chunks.sort(key=lambda c: c["term_overlap"], reverse=True)
-    chunks = chunks[:8]
+    chunks = semantic_rank_chunks(data.question, chunks[:16], top_k=8)
     if not chunks:
         return {"answer": "The available publications don't answer this.", "evidence": [], "disclaimer": DISCLAIMER}
     generated = await generate_feature_result("qa", f"Answer this question only from the evidence excerpts. If evidence is insufficient, say exactly: The available publications don't answer this. Question: {data.question}", chunks)

@@ -187,6 +187,44 @@ def _diversity_score(matrix_data: dict[str, Any]) -> float:
     return 0.5
 
 
+# Factor weighting rationale:
+# - Coverage (25%): Verifies extracted PDF text exists for downstream evidence synthesis.
+# - Diversity (35%): Highest weight to penalize redundant, echo-chamber reading lists and reward topic breadth.
+# - Recency (25%): Exponential decay (5-year half-life) prioritizing active state-of-the-art literature.
+# - Velocity (15%): Secondary signal measuring recent publication acceleration.
+WEIGHT_COVERAGE = 25.0
+WEIGHT_DIVERSITY = 35.0
+WEIGHT_RECENCY = 25.0
+WEIGHT_VELOCITY = 15.0
+
+PORTFOLIO_DISCLAIMER = (
+    "Research portfolio signals (STRONG_BUY, HOLD, REBALANCE) are heuristic indicators "
+    "evaluating literature collection health and bibliographic diversity. "
+    "They are metaphorical and do not constitute financial or investment advice."
+)
+
+
+def compute_composite_score(
+    coverage: float,
+    diversity: float,
+    decay: float,
+    velocity_signal: float,
+    w_cov: float = WEIGHT_COVERAGE,
+    w_div: float = WEIGHT_DIVERSITY,
+    w_rec: float = WEIGHT_RECENCY,
+    w_vel: float = WEIGHT_VELOCITY,
+) -> float:
+    """Compute weighted composite score from normalized factors."""
+    norm_velocity = min(max((velocity_signal + 2.0) / 4.0, 0.0), 1.0)
+    score = (
+        (coverage * w_cov)
+        + (diversity * w_div)
+        + (min(decay, 1.0) * w_rec)
+        + (norm_velocity * w_vel)
+    )
+    return round(float(score), 1)
+
+
 def research_portfolio_metrics(papers: list[LibraryPaper]) -> dict[str, Any]:
     """Aggregate research-quality metrics in the style of a portfolio risk report.
     
@@ -239,16 +277,13 @@ def research_portfolio_metrics(papers: list[LibraryPaper]) -> dict[str, Any]:
     sim_data = paper_similarity_matrix(papers)
     diversity = _diversity_score(sim_data)
 
-    # Composite score (0-100)
-    composite = round(
-        (coverage * 25) + (diversity * 35) + (min(decay, 1.0) * 25) + (min(max(velocity_signal + 1, 0), 1) * 15),
-        1,
-    )
+    # Composite score (0-100) using justified factor weights
+    composite = compute_composite_score(coverage, diversity, decay, velocity_signal)
 
-    # Qualitative signal
+    # Qualitative research health signal
     if composite >= 70:
         signal = "STRONG_BUY"
-        rationale = "High text coverage, diverse papers, and recent momentum \u2014 this research portfolio is well-constructed."
+        rationale = "High text coverage, diverse papers, and recent momentum — this research portfolio is well-constructed."
     elif composite >= 50:
         signal = "HOLD"
         rationale = "Moderate diversity or coverage gaps. Consider adding papers from underrepresented years or topics."
@@ -267,5 +302,6 @@ def research_portfolio_metrics(papers: list[LibraryPaper]) -> dict[str, Any]:
         "composite_score": composite,
         "signal": signal,
         "rationale": rationale,
+        "disclaimer": PORTFOLIO_DISCLAIMER,
         "numpy_available": HAS_NUMPY,
     }

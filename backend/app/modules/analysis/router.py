@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
-from app.core.deps import get_current_user, get_project_for_member
+from app.core.deps import get_current_user, get_project_for_member, require_editor
 from app.modules.users.models import User
 from app.modules.library.models import LibraryPaper
 from app.modules.analysis.models import Comparison, ComparisonPaper, ResearchGap
@@ -32,7 +32,7 @@ async def get_comparison(project_id: uuid.UUID, comparison_id: uuid.UUID, db: As
 async def create_comparison(project_id: uuid.UUID, data: ComparisonCreate,
                             db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)) -> dict:
     """Save a comparison of at least two papers from this project."""
-    await get_project_for_member(project_id, user, db)
+    await require_editor(project_id, user, db)
     papers = (await db.execute(select(LibraryPaper).where(
         LibraryPaper.project_id == project_id, LibraryPaper.id.in_(data.paper_ids)
     ))).scalars().all()
@@ -93,7 +93,7 @@ async def comparison_matrix(project_id: uuid.UUID, comparison_id: uuid.UUID,
 @router.delete("/comparisons/{comparison_id}", status_code=204)
 async def delete_comparison(project_id: uuid.UUID, comparison_id: uuid.UUID,
                             db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)) -> None:
-    await get_project_for_member(project_id, user, db)
+    await require_editor(project_id, user, db)
     comparison = await get_comparison(project_id, comparison_id, db)
     await db.delete(comparison)
     await db.commit()
@@ -102,7 +102,7 @@ async def delete_comparison(project_id: uuid.UUID, comparison_id: uuid.UUID,
 @router.post("/gaps", status_code=201)
 async def create_gap(project_id: uuid.UUID, data: GapCreate,
                      db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)) -> dict:
-    await get_project_for_member(project_id, user, db)
+    await require_editor(project_id, user, db)
     if data.comparison_id is not None:
         await get_comparison(project_id, data.comparison_id, db)
     gap = ResearchGap(project_id=project_id, comparison_id=data.comparison_id, note=data.note,
@@ -128,7 +128,7 @@ async def list_gaps(project_id: uuid.UUID, status: str | None = Query(default=No
 @router.patch("/gaps/{gap_id}")
 async def update_gap(project_id: uuid.UUID, gap_id: uuid.UUID, data: GapUpdate,
                      db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)) -> dict:
-    await get_project_for_member(project_id, user, db)
+    await require_editor(project_id, user, db)
     gap = (await db.execute(select(ResearchGap).where(
         ResearchGap.id == gap_id, ResearchGap.project_id == project_id
     ))).scalar_one_or_none()
@@ -147,7 +147,7 @@ async def update_gap(project_id: uuid.UUID, gap_id: uuid.UUID, data: GapUpdate,
 @router.delete("/gaps/{gap_id}", status_code=204)
 async def delete_gap(project_id: uuid.UUID, gap_id: uuid.UUID,
                      db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)) -> None:
-    await get_project_for_member(project_id, user, db)
+    await require_editor(project_id, user, db)
     gap = (await db.execute(select(ResearchGap).where(
         ResearchGap.id == gap_id, ResearchGap.project_id == project_id
     ))).scalar_one_or_none()

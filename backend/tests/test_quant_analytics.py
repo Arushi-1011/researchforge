@@ -140,3 +140,22 @@ class TestPortfolioMetrics:
         assert len(vec) == len(vocab)
         assert vec[0] > 0  # "machine" appears
         assert vec[2] == 0  # "neural" does not
+
+    def test_weight_sensitivity_and_perturbation(self) -> None:
+        from app.modules.quant.analytics import compute_composite_score
+
+        base = compute_composite_score(coverage=0.8, diversity=0.7, decay=0.9, velocity_signal=0.5)
+
+        # Perturb diversity weight +20% and coverage -20%
+        perturbed = compute_composite_score(
+            coverage=0.8, diversity=0.7, decay=0.9, velocity_signal=0.5,
+            w_cov=20.0, w_div=42.0, w_rec=25.0, w_vel=15.0
+        )
+        # Difference should be bounded and proportional to factor delta: (0.7 * 7) - (0.8 * 5) = 4.9 - 4.0 = +0.9
+        assert abs(perturbed - base) < 5.0
+
+    def test_disclaimer_present_in_output(self) -> None:
+        papers = [_paper("Sample", year=2023, extracted=True)]
+        metrics = research_portfolio_metrics(papers)
+        assert "disclaimer" in metrics
+        assert "financial or investment advice" in metrics["disclaimer"]

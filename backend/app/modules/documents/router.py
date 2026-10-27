@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
-from app.core.deps import get_current_user, get_project_for_member
+from app.core.deps import get_current_user, get_project_for_member, require_editor
 from app.modules.users.models import User
 from app.modules.projects.models import Project
 from app.modules.library.models import LibraryPaper
@@ -101,7 +101,7 @@ def serialize(doc: ProjectDocument) -> dict:
 @router.post("", status_code=201)
 async def create_document(project_id: uuid.UUID, data: DocumentCreate,
                           db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)) -> dict:
-    await get_project_for_member(project_id, user, db)
+    await require_editor(project_id, user, db)
     content = await build_content(project_id, data.title, data.sections, data.include_ai, db)
     document = ProjectDocument(project_id=project_id, created_by=user.id, title=data.title,
         sections_json=json.dumps(data.sections), content_json=json.dumps(content, ensure_ascii=False),

@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.db import get_db
-from app.core.deps import get_current_user, get_project_for_member
+from app.core.deps import get_current_user, get_project_for_member, require_editor
 from app.modules.users.models import User
 from app.modules.library.models import LibraryPaper
 from app.modules.library.schemas import ImportPaperIn
@@ -28,7 +28,7 @@ async def list_library(project_id: uuid.UUID, db: AsyncSession = Depends(get_db)
 
 @router.post("/import", status_code=201)
 async def import_paper(project_id: uuid.UUID, data: ImportPaperIn, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
-    await get_project_for_member(project_id,user,db)
+    await require_editor(project_id, user, db)
     if data.source_id:
         existing = (await db.execute(select(LibraryPaper).where(LibraryPaper.project_id==project_id,LibraryPaper.source==data.source,LibraryPaper.source_id==data.source_id))).scalar_one_or_none()
         if existing: raise HTTPException(409,"Paper is already in this project's library")
@@ -38,7 +38,7 @@ async def import_paper(project_id: uuid.UUID, data: ImportPaperIn, db: AsyncSess
 
 @router.post("/upload", status_code=201)
 async def upload_pdf(project_id: uuid.UUID, file: UploadFile = File(...), db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
-    await get_project_for_member(project_id,user,db)
+    await require_editor(project_id, user, db)
     if not file.filename or not file.filename.lower().endswith(".pdf") or file.content_type not in ("application/pdf", "application/octet-stream"):
         raise HTTPException(415,"Only PDF files are accepted")
     content=await file.read(MAX_PDF_BYTES+1)
@@ -54,7 +54,7 @@ async def upload_pdf(project_id: uuid.UUID, file: UploadFile = File(...), db: As
 @router.post("/{paper_id}/extract")
 async def extract_paper(project_id: uuid.UUID, paper_id: uuid.UUID, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
     """Extract and persist selectable text from a PDF uploaded to this project."""
-    await get_project_for_member(project_id, user, db)
+    await require_editor(project_id, user, db)
     result = await db.execute(select(LibraryPaper).where(LibraryPaper.id == paper_id, LibraryPaper.project_id == project_id))
     paper = result.scalar_one_or_none()
     if paper is None:

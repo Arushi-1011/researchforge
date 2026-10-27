@@ -1344,7 +1344,7 @@ function AuthScreen({
                 borderRadius: '8px',
               }}
             >
-              <Sparkles size={16} /> Instant Guest Recruiter Demo (1-Click)
+              <Sparkles size={16} /> Guest Demo
             </button>
           </div>
 

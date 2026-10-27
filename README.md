@@ -26,8 +26,7 @@
   <a href="#-quantitative-analytics--portfolio-scoring">Quant Engine</a> •
   <a href="#%EF%B8%8F-performance-benchmarks">Benchmarks</a> •
   <a href="#-rest-api-surface">API Reference</a> •
-  <a href="#-quickstart--local-setup">Quickstart</a> •
-  <a href="#-resume-bullet-points">Resume Bullets</a>
+  <a href="#-quickstart--local-setup">Quickstart</a>
 </p>
 
 ---
@@ -39,7 +38,7 @@ Literature reviews in engineering and quantitative research degrade quickly:
 2. **Invisible Redundancy vs. True Breadth**: Researchers lack an objective, mathematical metric to evaluate whether a bibliography is intellectually diverse or composed of redundant, highly correlated citations.
 3. **Fragile Collaboration**: Teams lack scoped multi-user workspaces with clear ownership boundaries, auditing, and deterministic report compilation.
 
-**ResearchForge** solves this by unifying the entire research lifecycle into a single, multi-tenant workspace backed by a **quantitative portfolio scoring engine** that models reading lists like financial portfolios.
+**ResearchForge** unifies the research lifecycle into a single, multi-tenant workspace backed by a **quantitative portfolio scoring engine** that models reading lists like financial portfolios.
 
 ---
 
@@ -52,8 +51,8 @@ Literature reviews in engineering and quantitative research degrade quickly:
 | **Quant Portfolio Scoring** | Models literature corpora as asset portfolios: computes publication momentum ($z$-scores), pairwise cosine similarity matrices, and multi-factor health scores (`STRONG_BUY`, `HOLD`, `REBALANCE`). |
 | **Semantic & Vector Search** | 384-dimensional term-hashed embeddings with cosine ranking and PostgreSQL `pgvector` IVFFlat indexing, with deterministic lexical fallbacks. |
 | **Structured Document Engine**| Deterministic Jinja2 template rendering compiling project metadata, comparison tables, and gaps into HTML, DOCX, and WeasyPrint PDF reports without LLM hallucinations. |
-| **Zero-Trust Multi-Tenancy** | Workspaces enforce discrete RBAC tiers (`OWNER`, `EDITOR`, `VIEWER`), short-lived access JWTs, and SHA-256 hashed rotating refresh tokens. |
-| **Defensive Telemetry** | Thread-safe sliding-window rate limiting (HTTP 429), defensive ASGI security headers, and structured ISO-8601 JSON logging with context-propagated `request_id` (`ContextVar`). |
+| **Role-Based Multi-Tenancy** | Workspaces enforce discrete RBAC tiers (`OWNER`, `EDITOR`, `VIEWER`), short-lived access JWTs, and SHA-256 hashed rotating refresh tokens. |
+| **Observability & Rate Limiting**| Thread-safe sliding-window rate limiting (HTTP 429), defensive ASGI security headers, and structured ISO-8601 JSON logging with context-propagated `request_id` (`ContextVar`). |
 
 ---
 
@@ -66,7 +65,7 @@ flowchart TD
     subgraph Client["Presentation Tier (React 18 SPA)"]
         SPA["React 18 · Vite · Strict TypeScript"]
         UI_STORE["TanStack Query · TailwindCSS · Lucide"]
-        DEMO_BTN["1-Click Instant Recruiter Demo"]
+        DEMO_BTN["Guest Demo"]
         SPA --- UI_STORE
         SPA --- DEMO_BTN
     end
@@ -81,7 +80,7 @@ flowchart TD
         
         subgraph Modules["Isolated Domain Modules"]
             AUTH["Auth & Users<br/>Argon2id · SHA-256 Refresh Tokens"]
-            PROJ["Projects & RBAC<br/>require_owner Dependency Guards"]
+            PROJ["Projects & RBAC<br/>require_owner / require_editor Guards"]
             QUANT["Quant Engine<br/>Vectorized Velocity & Cosine Similarity"]
             DISC["Discovery & Library<br/>arXiv · Semantic Scholar · PyMuPDF"]
             DOCS["Document Compiler<br/>Jinja2 · WeasyPrint PDF · DOCX"]
@@ -94,10 +93,10 @@ flowchart TD
     Modules -->|"asyncpg Connection Pool"| STORAGE
 
     subgraph Storage["Persistence & Storage Tier"]
-        DB[("PostgreSQL 16 Enterprise<br/>SQLAlchemy 2.0 Async ORM")]
+        DB[("PostgreSQL 16<br/>SQLAlchemy 2.0 Async ORM")]
         VECTOR["pgvector Extension<br/>IVFFlat Cosine Distance Index"]
         MIGRATIONS["Alembic Migrations<br/>Revisions 0001 through 0008_rbac_vector"]
-        FILES["Local Encrypted Storage<br/>25MB Validated PDF Binaries"]
+        FILES["Local Storage<br/>25MB Validated PDF Binaries"]
         
         DB --- VECTOR
         DB --- MIGRATIONS
@@ -109,16 +108,37 @@ flowchart TD
 
 ## ⚖️ Design Decisions & Trade-Offs
 
-A key marker of senior engineering is making deliberate, documented architectural trade-offs:
-
 | Engineering Decision | Why Chosen | Conscious Trade-Off / Alternative Considered |
 |---|---|---|
 | **Refresh Tokens: 256-bit Random + SHA-256 DB Hash** | Because tokens possess 256-bit cryptographically random entropy (`secrets.token_urlsafe(32)`), SHA-256 hashing is secure and computationally fast per request. A database snapshot leak never exposes usable plaintext tokens. | Fast hashing is unsuitable for low-entropy user passwords; **passwords strictly use Argon2id** via `pwdlib`. |
 | **Token Rotation with Instant Invalidation** | New refresh tokens are issued on every `/auth/refresh` invocation; old tokens are immediately invalidated. `/auth/logout` sets explicit UTC revocation. | Requires one additional database write per refresh exchange, acceptable for a robust security posture. |
-| **RBAC Enforced via Dependency Injection (`require_owner`)** | Declarative FastAPI dependency injection ensures authorization logic is verified atomically before handler execution. Destructive endpoints (`PATCH`, `DELETE`) cannot be accidentally added without compile/lint visibility. | Incurs a membership verification query on mutations; optimized with compound indexing on `(project_id, user_id)`. |
+| **RBAC Enforced via Dependency Injection (`require_owner`, `require_editor`)** | Declarative FastAPI dependency injection ensures authorization logic is verified atomically before handler execution. Destructive endpoints (`PATCH`, `DELETE`) cannot be accidentally added without compile/lint visibility. | Incurs a membership verification query on mutations; optimized with compound indexing on `(project_id, user_id)`. |
 | **In-Process Sliding-Window Limiter (`app/core/ratelimit.py`)** | Zero external infrastructure requirement, microsecond lock latency, and trivial to mock in automated testing environments. Returns RFC-compliant `429 Too Many Requests` + `Retry-After`. | State is bound to the single Python process. In a distributed multi-replica cluster, this shifts to a distributed Redis sliding-log counter. |
 | **384-Dimensional Term-Hashed Embeddings** | Completely deterministic, zero network latency, zero gigabyte model downloads, and fully testable in air-gapped CI environments with mathematical cosine ranking. | Measures lexical and term-overlap semantics rather than deep contextual nuances; designed to fall back gracefully to pgvector or pure lexical search. |
 | **Deterministic Jinja2 Document Generation** | Scientific dossiers and comparison reports must be accurate, reproducible, and verifiable. Reports compile through Jinja2 into WeasyPrint PDF and DOCX. | Does not generate conversational LLM text on export; eliminates hallucination risk for academic citations. |
+
+---
+
+## 🔒 Security & Workspace Boundary Isolation
+
+### Multi-Tenant Boundary
+Every project-scoped route queries `ProjectMember` through `get_project_for_member(project_id, user, db)`. If a user attempts to access or mutate papers, comparisons, gaps, or documents in another workspace by altering UUIDs in the request path, the query returns `404 Not Found`.
+
+### Role Permissions Matrix
+| Operation | `OWNER` | `EDITOR` | `VIEWER` | Enforcing Guard |
+|---|:---:|:---:|:---:|---|
+| **View Papers, Comparisons, Gaps, Analytics** | ✅ | ✅ | ✅ | `get_project_for_member` |
+| **Export Reports (HTML / DOCX / PDF)** | ✅ | ✅ | ✅ | `get_project_for_member` |
+| **Import Papers & Upload PDFs** | ✅ | ✅ | ❌ (403) | `require_editor` |
+| **Extract PDF Text** | ✅ | ✅ | ❌ (403) | `require_editor` |
+| **Create / Delete Comparisons & Gaps** | ✅ | ✅ | ❌ (403) | `require_editor` |
+| **Compile New Research Documents** | ✅ | ✅ | ❌ (403) | `require_editor` |
+| **Invite New Members (`EDITOR`)** | ✅ | ✅ | ❌ (403) | `require_editor` |
+| **Update Member Roles (`OWNER`/`EDITOR`/`VIEWER`)** | ✅ | ❌ (403) | ❌ (403) | `require_owner` |
+| **Evict Other Workspace Members** | ✅ | ❌ (403) | ❌ (403) | `require_owner` |
+| **Rename or Delete Workspace** | ✅ | ❌ (403) | ❌ (403) | `require_owner` |
+
+*Note: Any member may remove themselves from a workspace, but the sole remaining owner cannot leave or be demoted without deleting the workspace or transferring ownership.*
 
 ---
 
@@ -139,12 +159,16 @@ ResearchForge adapts financial portfolio theory and signal processing to academi
 A deterministic composite score ($0$ to $100$) evaluated across four quantitative factors:
 $$\text{Composite Score} = 0.25 \cdot C + 0.35 \cdot D + 0.25 \cdot R + 0.15 \cdot V$$
 
-| Factor | Weight | Formulation | Purpose |
+| Factor | Weight | Formulation | Rationale |
 |---|---|---|---|
-| **Coverage ($C$)** | $25\%$ | $\frac{\text{Papers with full text extracted}}{\text{Total Papers}}$ | Data completeness |
-| **Diversity ($D$)** | $35\%$ | $1.0 - \text{Average off-diagonal pairwise cosine similarity}$ | Portfolio breadth (non-redundancy) |
-| **Recency Decay ($R$)** | $25\%$ | $e^{-\frac{\ln(2) \cdot \Delta t}{5.0}}$ (Exponential decay with 5-year half-life) | Temporal currency of findings |
-| **Velocity Signal ($V$)** | $15\%$ | Normalized $z$-score clipped to $[0, 1]$ | Recent publication momentum |
+| **Coverage ($C$)** | $25\%$ | $\frac{\text{Papers with full text extracted}}{\text{Total Papers}}$ | Verifies usable text exists for evidence synthesis. |
+| **Diversity ($D$)** | $35\%$ | $1.0 - \text{Average off-diagonal pairwise cosine similarity}$ | Primary factor: heavily penalizes redundant, echo-chamber reading lists and rewards topic breadth. |
+| **Recency Decay ($R$)** | $25\%$ | $e^{-\frac{\ln(2) \cdot \Delta t}{5.0}}$ (Exponential decay with 5-year half-life) | Prioritizes active state-of-the-art literature without discarding foundational papers. |
+| **Velocity Signal ($V$)** | $15\%$ | Normalized $z$-score clipped to $[0, 1]$ | Secondary signal measuring recent publication acceleration. |
+
+### Model Clarification & Weight Sensitivity
+- **Non-Financial Disclaimer**: The labels (`STRONG_BUY`, `HOLD`, `REBALANCE`) are **solely heuristic metaphors** evaluating bibliographic collection health (whether a collection is broad, balanced, or redundant) and do **not** constitute financial or investment advice.
+- **Weight Sensitivity**: Factor sensitivity is linear and bounded: a $\pm 20\%$ perturbation in factor weights produces $<5.0$ points shift on a 100-point scale, preserving the relative rank-order across different portfolios (verified in `backend/tests/test_quant_analytics.py`).
 
 **Algorithmic Guidance**:
 - **`STRONG_BUY`** ($\ge 70$): Comprehensive, diverse literature collection with active publication momentum.
@@ -155,7 +179,7 @@ $$\text{Composite Score} = 0.25 \cdot C + 0.35 \cdot D + 0.25 \cdot R + 0.15 \cd
 
 ## ⏱️ Performance Benchmarks
 
-ResearchForge includes a high-precision performance benchmarking harness at [`backend/benchmarks/benchmark_quant.py`](file:///Users/arushi/Downloads/researchforge-integrated%202/backend/benchmarks/benchmark_quant.py).
+ResearchForge includes a high-precision performance benchmarking harness at [`backend/benchmarks/benchmark_quant.py`](backend/benchmarks/benchmark_quant.py).
 
 Run the benchmark suite locally:
 ```bash
@@ -167,14 +191,22 @@ python backend/benchmarks/benchmark_quant.py
 - **Runtime**: Python 3.12, NumPy 2.2+
 - **Methodology**: 5 iterations per corpus size, high-resolution `time.perf_counter()`
 
-| Corpus Size | Pairwise Dot-Products | Matrix Latency (Mean) | Momentum Latency | Portfolio Composite |
+| Corpus Size | Pairwise Dot-Products | Matrix Latency (Mean) | Momentum Latency | Throughput |
 |---|---|---|---|---|
-| **10 papers** | 45 pairs | **0.28 ms** | 0.01 ms | 68.5 / 100 |
-| **50 papers** | 1,225 pairs | **1.21 ms** | 0.03 ms | 68.5 / 100 |
-| **100 papers** | 4,950 pairs | **2.59 ms** | 0.08 ms | 68.5 / 100 |
-| **250 papers** | 31,125 pairs | **7.83 ms** | 0.33 ms | 68.5 / 100 |
+| **10 papers** | 45 pairs | **0.28 ms** | 0.01 ms | 163,000 pairs/s |
+| **50 papers** | 1,225 pairs | **1.20 ms** | 0.04 ms | 1,021,000 pairs/s |
+| **100 papers** | 4,950 pairs | **2.53 ms** | 0.08 ms | 1,955,000 pairs/s |
+| **250 papers** | 31,125 pairs | **7.46 ms** | 0.30 ms | 4,170,000 pairs/s |
 
-*Zero external network I/O; deterministic and pure matrix operations.*
+*Zero external network I/O; deterministic and pure in-memory matrix operations.*
+
+---
+
+## 🔍 Search Implementation & Validation
+
+- **Hashed Semantic Projection**: Embeddings use a 384-dimensional term-hashed projection with FNV-1a hashing and L2 normalization, evaluated via cosine similarity (`backend/app/modules/ai/embeddings.py`).
+- **Benchmark Evaluation**: Evaluated against a ground-truth labeled corpus across distinct academic domains (Transformers/NLP, Market Microstructure, and Genomics). In automated benchmarks (`backend/tests/test_search_evaluation.py`), term-hashed cosine similarity achieves **100% Precision@1** and **1.0 MRR@3** in domain separation, with graceful degradation when encountering out-of-vocabulary terms.
+- **pgvector Integration**: Uses PostgreSQL's `vector` extension with IVFFlat cosine distance indexing (`0008_rbac_vector.py`), with seamless fallback to in-memory cosine ranking if the extension is unavailable in the environment.
 
 ---
 
@@ -201,17 +233,18 @@ All routes are versioned under `/api/v1` and document OpenAPI 3.1 / Swagger sche
 | `PATCH` | `/api/v1/projects/{id}` | Owner | Update workspace name/description (`require_owner`) |
 | `DELETE` | `/api/v1/projects/{id}` | Owner | Delete workspace and cascade-delete child records |
 | `GET` | `/api/v1/projects/{id}/members` | Member | List project members with assigned roles |
-| `POST` | `/api/v1/projects/{id}/members` | Member | Invite registered user as `EDITOR` |
-| `DELETE` | `/api/v1/projects/{id}/members/{uid}` | Member | Evict member (owners can remove others; self-removal permitted) |
+| `POST` | `/api/v1/projects/{id}/members` | Editor/Owner | Invite registered user as `EDITOR` (`require_editor`) |
+| `PATCH`| `/api/v1/projects/{id}/members/{uid}/role` | Owner | Modify member role (`OWNER`, `EDITOR`, `VIEWER`) |
+| `DELETE`| `/api/v1/projects/{id}/members/{uid}` | Member | Evict member (owners can remove others; self-removal permitted) |
 
 ### Discovery, Ingestion, & Quant Analytics
 | Method | Endpoint | Authorization | Description |
 |---|---|---|---|
 | `POST` | `/api/v1/discovery/search` | Bearer JWT | Query arXiv & Semantic Scholar with rate limiting & deduplication |
 | `GET` | `/api/v1/projects/{id}/library` | Member | Retrieve workspace literature library |
-| `POST` | `/api/v1/projects/{id}/library/import` | Member | Import paper from search results with metadata deduplication |
-| `POST` | `/api/v1/projects/{id}/library/upload` | Member | Upload PDF binary (25 MB limit) with safe file naming |
-| `POST` | `/api/v1/projects/{id}/library/{pid}/extract`| Member | Extract selectable text via PyMuPDF |
+| `POST` | `/api/v1/projects/{id}/library/import` | Editor/Owner | Import paper from search results with metadata deduplication |
+| `POST` | `/api/v1/projects/{id}/library/upload` | Editor/Owner | Upload PDF binary (25 MB limit) with safe file naming |
+| `POST` | `/api/v1/projects/{id}/library/{pid}/extract`| Editor/Owner | Extract selectable text via PyMuPDF |
 | `GET` | `/api/v1/projects/{id}/analytics` | Member | Complete quant report: timeline, similarity matrix, health score |
 | `GET` | `/api/v1/projects/{id}/analytics/timeline` | Member | Annual publication time-series with rolling momentum |
 | `GET` | `/api/v1/projects/{id}/analytics/similarity`| Member | Pairwise cosine similarity matrix with outlier insights |
@@ -220,9 +253,9 @@ All routes are versioned under `/api/v1` and document OpenAPI 3.1 / Swagger sche
 ### Comparisons, Gaps, & Documents
 | Method | Endpoint | Authorization | Description |
 |---|---|---|---|
-| `GET/POST`| `/api/v1/projects/{id}/comparisons` | Member | Create and list multi-paper comparison matrices |
-| `GET/POST`| `/api/v1/projects/{id}/gaps` | Member | Track identified research gaps (`OPEN` / `ADDRESSED`) |
-| `GET/POST`| `/api/v1/projects/{id}/documents` | Member | Compile structured research dossiers (Jinja2) |
+| `GET/POST`| `/api/v1/projects/{id}/comparisons` | Read: Member / Create: Editor | Create and list multi-paper comparison matrices |
+| `GET/POST`| `/api/v1/projects/{id}/gaps` | Read: Member / Create: Editor | Track identified research gaps (`OPEN` / `ADDRESSED`) |
+| `GET/POST`| `/api/v1/projects/{id}/documents` | Read: Member / Create: Editor | Compile structured research dossiers (Jinja2) |
 | `GET` | `/api/v1/projects/{id}/documents/{did}/view` | Member | Render authenticated HTML document view |
 | `GET` | `/api/v1/projects/{id}/documents/{did}/export.{ext}` | Member | Download compiled document as PDF or DOCX |
 
@@ -230,7 +263,7 @@ All routes are versioned under `/api/v1` and document OpenAPI 3.1 / Swagger sche
 
 ## 🗄️ Relational Data Model
 
-Managed through **Alembic** migrations ([`backend/alembic/versions`](file:///Users/arushi/Downloads/researchforge-integrated%202/backend/alembic/versions)):
+Managed through **Alembic** migrations ([`backend/alembic/versions`](backend/alembic/versions)):
 
 | Entity | Primary Key | Foreign Keys & Cascades | Key Columns & Indices |
 |---|---|---|---|
@@ -276,7 +309,7 @@ open http://localhost:5174
 | **API Gateway** | `http://localhost:8001` | FastAPI ASGI backend (`/docs` for Swagger UI) |
 | **Database** | `localhost:5433` | PostgreSQL 16 with pgvector |
 
-> **⚡ 1-Click Guest Recruiter Demo**: On the login screen, click **`Instant Guest Recruiter Demo (1-Click)`** to instantly sign into an active test environment without filling out registration forms.
+> **⚡ Guest Demo**: On the login screen, click **`Guest Demo`** to instantly sign into an active test environment without filling out registration forms.
 
 ### Option B: Local Host Development
 
@@ -301,13 +334,13 @@ npm run dev
 
 ## 🧪 Testing Discipline
 
-ResearchForge guarantees reproducible testing with zero live external network calls during automated CI:
+ResearchForge adheres to automated testing standards with offline fixtures and recorded responses in CI:
 
 ```bash
 # Run backend pure unit tests & benchmarks
 cd backend
 python benchmarks/benchmark_quant.py
-python -m unittest tests/test_embeddings.py tests/test_quant_analytics.py
+python -m unittest tests/test_embeddings.py tests/test_quant_analytics.py tests/test_search_evaluation.py
 
 # Run frontend tests & production build verification
 cd ../frontend
@@ -315,10 +348,10 @@ npm test -- --run
 npm run build
 ```
 
-- **Unit & Math Testing**: Pure mathematical verification of TF-IDF tokenization, cosine similarity, and portfolio factors without database or I/O overhead.
+- **Unit & Math Testing**: Pure mathematical verification of TF-IDF tokenization, cosine similarity, search evaluation, and portfolio factors without database or I/O overhead.
 - **Frontend Quality**: 8 of 8 Vitest + React Testing Library component tests passing.
 - **TypeScript Static Typing**: `tsc --noEmit` runs with 0 errors across all routes and API client schemas.
-- **End-to-End Suite**: Playwright workflow integration in [`e2e/workflow.spec.ts`](file:///Users/arushi/Downloads/researchforge-integrated%202/e2e/workflow.spec.ts).
+- **End-to-End Suite**: Playwright workflow integration in [`e2e/workflow.spec.ts`](e2e/workflow.spec.ts).
 
 ---
 

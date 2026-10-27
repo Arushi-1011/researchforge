@@ -5,7 +5,7 @@ from pydantic import BaseModel,Field
 from sqlalchemy import select,func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
-from app.core.deps import get_current_user,get_project_for_member,require_owner
+from app.core.deps import get_current_user,get_project_for_member,require_owner,require_editor
 from app.modules.users.models import User
 from app.modules.projects.models import Project,ProjectMember
 from app.modules.users.models import User as Account
@@ -36,7 +36,7 @@ async def members(project_id:UUID,db:AsyncSession=Depends(get_db),user:User=Depe
  return [{"id":str(m.id),"email":m.email,"display_name":m.display_name,"role":member_role} for m,member_role in rows]
 @router.post("/{project_id}/members",status_code=201)
 async def add_member(project_id:UUID,data:MemberIn,db:AsyncSession=Depends(get_db),user:User=Depends(get_current_user)):
- await get_project_for_member(project_id,user,db)
+ await require_editor(project_id,user,db)
  target=(await db.execute(select(Account).where(Account.email==data.email.lower().strip()))).scalar_one_or_none()
  if target is None: raise HTTPException(404,"User must register before being invited")
  if await db.get(ProjectMember,(project_id,target.id)): raise HTTPException(409,"User is already a member")
@@ -57,3 +57,20 @@ async def remove_member(project_id:UUID,user_id:UUID,db:AsyncSession=Depends(get
   owner_count=(await db.execute(select(func.count()).select_from(ProjectMember).where(ProjectMember.project_id==project_id,ProjectMember.role=="OWNER"))).scalar_one()
   if owner_count<=1: raise HTTPException(409,"Cannot remove the last owner; transfer ownership first")
  await db.delete(membership);await db.commit()
+
+class RoleUpdateIn(BaseModel):
+ role: str
+
+@router.patch("/{project_id}/members/{user_id}/role")
+async def update_member_role(project_id:UUID,user_id:UUID,data:RoleUpdateIn,db:AsyncSession=Depends(get_db),user:User=Depends(get_current_user)):
+ await require_owner(project_id,user,db)
+ new_role=data.role.upper().strip()
+ if new_role not in ("OWNER","EDITOR","VIEWER"): raise HTTPException(422,"Role must be OWNER, EDITOR, or VIEWER")
+ membership=await db.get(ProjectMember,(project_id,user_id))
+ if membership is None: raise HTTPException(404,"Member not found")
+ if membership.role=="OWNER" and new_role!="OWNER":
+  owners=(await db.execute(select(func.count()).select_from(ProjectMember).where(ProjectMember.project_id==project_id,ProjectMember.role=="OWNER"))).scalar_one()
+  if owners<=1: raise HTTPException(409,"Cannot demote the last project owner")
+ membership.role=new_role
+ await db.commit()
+ return {"user_id":str(user_id),"role":new_role}
