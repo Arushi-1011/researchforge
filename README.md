@@ -1,6 +1,6 @@
 # ResearchForge — Full-Stack Research Intelligence & Quantitative Analytics Platform
 
-[![CI](https://github.com/user/researchforge/actions/workflows/ci.yml/badge.svg)](https://github.com/user/researchforge/actions)
+[![CI](https://github.com/Arushi-1011/researchforge/actions/workflows/ci.yml/badge.svg)](https://github.com/Arushi-1011/researchforge/actions)
 ![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)
