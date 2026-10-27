@@ -143,14 +143,3 @@ npm run dev
 - **End-to-End Suite**: Playwright workflow specification in `frontend/e2e/workflow.spec.ts`.
 
 ---
-
-## 📄 Resume Bullet Points (Copy & Paste Ready)
-
-- **Full-Stack / Backend Engineer**:
-  > *"Architected a high-throughput research intelligence platform in FastAPI and React/TypeScript, implementing zero-trust RBAC, SHA-256 rotating refresh tokens, and sliding-window rate limiting that curtailed burst traffic by 100%."*
-
-- **Quant Systems / Platform Engineer**:
-  > *"Engineered a pure-vectorized literature portfolio engine computing 31,000+ pairwise cosine similarities and rolling-window momentum $z$-scores in <8ms, surfacing automated portfolio rebalance signals."*
-
-- **Distributed Systems / Performance**:
-  > *"Built an async pipeline with PostgreSQL/pgvector and context-propagated JSON logging (`ContextVar`), achieving sub-2ms cache-aside reads and sub-1.5s production asset bundle delivery."*
