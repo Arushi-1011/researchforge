@@ -1,0 +1,26 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install -e './backend[dev]' pip-audit
+      - run: python -c "import tomllib; d=tomllib.load(open('backend/pyproject.toml','rb')); open('/tmp/requirements-audit.txt','w').write('\\n'.join(d['project']['dependencies']))"
+      - run: pip-audit -r /tmp/requirements-audit.txt
+      - run: cd backend && ruff check app tests
+      - run: cd backend && mypy app
+      - run: cd backend && pytest
+      - run: cd backend && lint-imports
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - run: cd frontend && npm ci
+      - run: cd frontend && npm run build
+      - run: cd frontend && npm test
+      - run: cd frontend && npm run lint

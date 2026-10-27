@@ -1,0 +1,8 @@
+[importlinter]
+root_package = app
+
+[importlinter:contract:ai-boundary]
+name = AI must remain isolated from non-AI modules
+ type = forbidden
+source_modules = app.modules.ai
+destination_modules = app.modules.extraction, app.modules.analysis, app.modules.documents, app.modules.discovery, app.modules.library, app.modules.projects
