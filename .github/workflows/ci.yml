@@ -8,8 +8,9 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: pip install -e './backend[dev]' pip-audit
-      - run: python -c "import tomllib; d=tomllib.load(open('backend/pyproject.toml','rb')); open('/tmp/requirements-audit.txt','w').write('\\n'.join(d['project']['dependencies']))"
-      - run: pip-audit -r /tmp/requirements-audit.txt
+      # Audit the fully-resolved installed environment so transitive deps
+      # (e.g. starlette, which arrives via fastapi) are also checked.
+      - run: pip-audit --skip-editable
       - run: cd backend && ruff check app tests
       - run: cd backend && mypy app
       - run: cd backend && pytest
