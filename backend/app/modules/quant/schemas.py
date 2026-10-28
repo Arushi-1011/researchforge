@@ -29,6 +29,7 @@ class PortfolioMetrics(BaseModel):
     signal: str
     rationale: str
     numpy_available: bool
+    disclaimer: str = ""
 
 
 class AnalyticsReport(BaseModel):

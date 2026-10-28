@@ -31,3 +31,19 @@ line-length = 100
 
 [tool.mypy]
 strict = true
+ignore_missing_imports = true
+# Third-party libraries without bundled stubs
+[[tool.mypy.overrides]]
+module = [
+  "pymupdf",
+  "pymupdf.*",
+  "fitz",
+  "fitz.*",
+  "weasyprint",
+  "weasyprint.*",
+  "docx",
+  "docx.*",
+  "pwdlib",
+  "pwdlib.*",
+]
+ignore_missing_imports = true

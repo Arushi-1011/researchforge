@@ -107,7 +107,7 @@ def paper_similarity_matrix(papers: list[LibraryPaper]) -> dict[str, Any]:
     Returns a symmetric matrix with paper titles as labels.
     """
     if len(papers) < 2:
-        return {"labels": [], "matrix": [], "insight": "Need ≥2 papers for similarity analysis."}
+        return {"labels": [], "matrix": [], "insights": []}
 
     # Build vocab from all abstracts + titles
     corpus = [
