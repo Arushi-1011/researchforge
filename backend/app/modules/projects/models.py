@@ -1,4 +1,5 @@
 """Projects and role-based membership (OWNER / EDITOR / VIEWER)."""
+
 import enum
 import uuid
 from datetime import datetime, timezone

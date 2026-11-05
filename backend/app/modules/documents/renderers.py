@@ -1,9 +1,8 @@
 """Safe HTML, PDF, and DOCX renderers from one normalized document structure."""
-from html import escape
+
 from io import BytesIO
 from jinja2 import Environment, BaseLoader, select_autoescape
 from docx import Document
-from docx.shared import Inches
 
 
 HTML_TEMPLATE = """<!doctype html>
@@ -35,12 +34,15 @@ th{background:#f1efff} .muted{color:#666} .paper{page-break-inside:avoid}
 
 
 def render_html(content: dict) -> str:
-    env = Environment(loader=BaseLoader(), autoescape=select_autoescape(default=True, default_for_string=True))
+    env = Environment(
+        loader=BaseLoader(), autoescape=select_autoescape(default=True, default_for_string=True)
+    )
     return env.from_string(HTML_TEMPLATE).render(**content)
 
 
 def render_pdf(content: dict) -> bytes:
     from weasyprint import HTML
+
     return HTML(string=render_html(content), base_url=None).write_pdf()
 
 

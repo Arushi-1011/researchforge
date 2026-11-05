@@ -1,27 +1,34 @@
 """Search endpoint with short-lived in-process response cache and source warnings."""
+
 import asyncio
 import hashlib
 import json
 import time
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_current_user
 from app.core.db import get_db
 from app.modules.users.models import User
 from app.modules.discovery.schemas import SearchRequest, SearchResponse
-from app.modules.discovery.adapters import ArxivAdapter, SemanticScholarAdapter, SourceError
+from app.modules.discovery.adapters import ArxivAdapter, SemanticScholarAdapter
 
 router = APIRouter(prefix="/discovery", tags=["discovery"])
 _cache: dict[str, tuple[float, str]] = {}
 _CACHE_TTL = 300
 _lock = asyncio.Lock()
 
+
 @router.post("/search", response_model=SearchResponse)
-async def search_publications(payload: SearchRequest, user: User = Depends(get_current_user),
-                              db: AsyncSession = Depends(get_db)) -> SearchResponse:
+async def search_publications(
+    payload: SearchRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> SearchResponse:
     del user, db
     query = payload.query.strip()
-    key = hashlib.sha256(json.dumps([query.casefold(), sorted(payload.sources), payload.limit]).encode()).hexdigest()
+    key = hashlib.sha256(
+        json.dumps([query.casefold(), sorted(payload.sources), payload.limit]).encode()
+    ).hexdigest()
     async with _lock:
         cached = _cache.get(key)
         if cached and cached[0] > time.monotonic():
@@ -39,7 +46,9 @@ async def search_publications(payload: SearchRequest, user: User = Depends(get_c
     seen: set[str] = set()
     unique = []
     for paper in results:
-        identity = f"doi:{paper.doi.casefold()}" if paper.doi else f"{paper.source}:{paper.source_id}"
+        identity = (
+            f"doi:{paper.doi.casefold()}" if paper.doi else f"{paper.source}:{paper.source_id}"
+        )
         if identity not in seen:
             seen.add(identity)
             unique.append(paper)

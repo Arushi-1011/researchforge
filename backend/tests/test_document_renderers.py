@@ -1,4 +1,5 @@
 """Unit tests for document renderers without a database or external APIs."""
+
 from io import BytesIO
 from docx import Document
 from app.modules.documents.renderers import render_docx, render_html
@@ -10,12 +11,23 @@ def sample_content():
         "created_at": "2026-10-27 00:00 UTC",
         "project_name": "Demo",
         "sections": [
-            {"key": "overview", "title": "1. Project Overview", "kind": "list",
-             "items": ["Project name: Demo"], "text": "A <script>alert(1)</script>"},
-            {"key": "literature", "title": "2. Literature Table", "kind": "table",
-             "headers": ["#", "Title"], "rows": [["1", "A Paper"]], "items": [], "text": ""},
-            {"key": "gaps", "title": "5. Research Gaps", "kind": "list",
-             "items": [], "text": ""},
+            {
+                "key": "overview",
+                "title": "1. Project Overview",
+                "kind": "list",
+                "items": ["Project name: Demo"],
+                "text": "A <script>alert(1)</script>",
+            },
+            {
+                "key": "literature",
+                "title": "2. Literature Table",
+                "kind": "table",
+                "headers": ["#", "Title"],
+                "rows": [["1", "A Paper"]],
+                "items": [],
+                "text": "",
+            },
+            {"key": "gaps", "title": "5. Research Gaps", "kind": "list", "items": [], "text": ""},
         ],
     }
 

@@ -1,14 +1,17 @@
 """Deterministic PDF text extraction helpers used by the library module."""
+
 from dataclasses import dataclass
 import fitz
 
 MAX_EXTRACT_PAGES = 500
 MAX_EXTRACTED_CHARS = 5_000_000
 
+
 @dataclass(frozen=True)
 class ExtractionResult:
     text: str
     page_count: int
+
 
 def extract_pdf_text(content: bytes) -> ExtractionResult:
     """Extract selectable text from PDF bytes; OCR is intentionally not implied."""

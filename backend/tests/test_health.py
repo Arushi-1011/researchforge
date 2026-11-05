@@ -1,4 +1,5 @@
 """Foundation health route contract."""
+
 from unittest.mock import AsyncMock
 
 from fastapi.testclient import TestClient

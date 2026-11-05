@@ -4,6 +4,7 @@ Treats paper collections as research "portfolios" and applies financial signal
 processing techniques to surface publication trends, paper similarity, and
 research momentum metrics.
 """
+
 from __future__ import annotations
 
 import math
@@ -17,6 +18,7 @@ from typing import Any, TYPE_CHECKING
 try:
     import numpy as np
     import pandas as pd
+
     HAS_NUMPY = True
 except ImportError:  # pragma: no cover
     HAS_NUMPY = False
@@ -31,9 +33,10 @@ else:
 # Time-series: publication velocity
 # ---------------------------------------------------------------------------
 
+
 def publication_timeline(papers: list[LibraryPaper]) -> list[dict[str, Any]]:
     """Compute monthly publication counts as a time-series.
-    
+
     Analogous to a bar chart of trade volume over time — useful for spotting
     research momentum and acceleration in a field.
     """
@@ -60,11 +63,9 @@ def publication_timeline(papers: list[LibraryPaper]) -> list[dict[str, Any]]:
     ]
 
 
-def rolling_velocity(
-    papers: list[LibraryPaper], window: int = 3
-) -> list[dict[str, Any]]:
+def rolling_velocity(papers: list[LibraryPaper], window: int = 3) -> list[dict[str, Any]]:
     """Compute rolling-window average publication rate (momentum indicator).
-    
+
     Equivalent to a moving-average crossover in financial time-series — a
     rising rolling velocity signals accelerating research activity.
     """
@@ -90,6 +91,7 @@ def rolling_velocity(
 # Similarity matrix (correlation-matrix equivalent)
 # ---------------------------------------------------------------------------
 
+
 def _tfidf_vector(text: str, vocab: list[str]) -> list[float]:
     """Compute a simple TF-IDF vector for one document against a shared vocab."""
     tokens = re.findall(r"[a-z]{3,}", text.lower())
@@ -101,7 +103,7 @@ def _tfidf_vector(text: str, vocab: list[str]) -> list[float]:
 
 def paper_similarity_matrix(papers: list[LibraryPaper]) -> dict[str, Any]:
     """Compute pairwise cosine-similarity matrix across papers.
-    
+
     Analogous to a correlation matrix in portfolio construction — identifies
     redundant (highly correlated) papers and truly novel (uncorrelated) additions.
     Returns a symmetric matrix with paper titles as labels.
@@ -110,10 +112,7 @@ def paper_similarity_matrix(papers: list[LibraryPaper]) -> dict[str, Any]:
         return {"labels": [], "matrix": [], "insights": []}
 
     # Build vocab from all abstracts + titles
-    corpus = [
-        ((p.abstract or "") + " " + p.title).lower()
-        for p in papers
-    ]
+    corpus = [((p.abstract or "") + " " + p.title).lower() for p in papers]
     all_tokens = re.findall(r"[a-z]{4,}", " ".join(corpus))
     # Top-300 terms by frequency (document frequency weighted)
     doc_freq: Counter[str] = Counter()
@@ -121,10 +120,9 @@ def paper_similarity_matrix(papers: list[LibraryPaper]) -> dict[str, Any]:
         for term in set(re.findall(r"[a-z]{4,}", doc)):
             doc_freq[term] += 1
     # IDF-weight: prefer terms in 1-3 docs (discriminative)
-    vocab = [
-        term for term, df in doc_freq.most_common(500)
-        if 1 <= df <= max(2, len(papers) // 2)
-    ][:300]
+    vocab = [term for term, df in doc_freq.most_common(500) if 1 <= df <= max(2, len(papers) // 2)][
+        :300
+    ]
     if not vocab:
         vocab = list(set(all_tokens))[:300]
 
@@ -173,6 +171,7 @@ def paper_similarity_matrix(papers: list[LibraryPaper]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Portfolio metrics
 # ---------------------------------------------------------------------------
+
 
 def _diversity_score(matrix_data: dict[str, Any]) -> float:
     """Compute average off-diagonal similarity — lower = more diverse portfolio."""
@@ -227,7 +226,7 @@ def compute_composite_score(
 
 def research_portfolio_metrics(papers: list[LibraryPaper]) -> dict[str, Any]:
     """Aggregate research-quality metrics in the style of a portfolio risk report.
-    
+
     Metrics:
     - coverage_score: fraction of papers with extracted PDF text (data completeness)
     - diversity_score: 1 - avg_pairwise_similarity (higher = more diverse set)

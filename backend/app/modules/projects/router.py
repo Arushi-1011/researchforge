@@ -1,4 +1,5 @@
 """Project CRUD and member management; project data is hidden from non-members."""
+
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException

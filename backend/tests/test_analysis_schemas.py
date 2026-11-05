@@ -1,4 +1,5 @@
 """Validation tests for comparison and research-gap requests."""
+
 from uuid import uuid4
 import pytest
 from pydantic import ValidationError

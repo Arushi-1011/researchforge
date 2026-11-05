@@ -1,11 +1,14 @@
 """Central application settings; all secrets are environment supplied."""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     app_env: str = "development"
     api_prefix: str = "/api/v1"
-    database_url: str = "postgresql+asyncpg://researchforge:researchforge@localhost:5432/researchforge"
+    database_url: str = (
+        "postgresql+asyncpg://researchforge:researchforge@localhost:5432/researchforge"
+    )
     jwt_secret: str = "dev-only-change-me"
     access_token_minutes: int = 30
     refresh_token_days: int = 30

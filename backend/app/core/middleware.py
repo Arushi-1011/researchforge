@@ -1,4 +1,5 @@
 """Small security-focused ASGI middleware used by the API."""
+
 from __future__ import annotations
 
 from uuid import uuid4
@@ -23,10 +24,15 @@ class SecurityHeadersMiddleware:
         incoming = dict(scope.get("headers", []))
         candidate = incoming.get(self.request_id_header, b"").decode("latin-1", errors="ignore")
         # Only accept short printable identifiers; otherwise generate one ourselves.
-        request_id = candidate if 1 <= len(candidate) <= 80 and candidate.isascii() and candidate.isprintable() else str(uuid4())
+        request_id = (
+            candidate
+            if 1 <= len(candidate) <= 80 and candidate.isascii() and candidate.isprintable()
+            else str(uuid4())
+        )
 
         token = request_id_var.set(request_id)
         try:
+
             async def send_with_headers(message: Message) -> None:
                 if message["type"] == "http.response.start":
                     headers = list(message.get("headers", []))
@@ -48,4 +54,3 @@ class SecurityHeadersMiddleware:
             await self.app(scope, receive, send_with_headers)
         finally:
             request_id_var.reset(token)
-

@@ -1,7 +1,6 @@
-
 """Registration, login, and current-user endpoints."""
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -9,10 +8,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
-from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, hash_token
+from app.core.security import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    create_refresh_token,
+    hash_token,
+)
 from app.core.deps import get_current_user
 from app.modules.users.models import User, RefreshToken
-from app.modules.projects.models import ProjectMember
 from app.modules.users.schemas import RegisterIn, LoginIn
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -36,9 +40,7 @@ async def register(data: RegisterIn, db: AsyncSession = Depends(get_db)):
             detail="Password must be at least 8 characters and include a letter and digit",
         )
 
-    existing_user = (
-        await db.execute(select(User).where(User.email == email))
-    ).scalar_one_or_none()
+    existing_user = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
 
     if existing_user:
         raise HTTPException(status_code=409, detail="Email is already registered")
@@ -63,9 +65,7 @@ async def register(data: RegisterIn, db: AsyncSession = Depends(get_db)):
 async def login(data: LoginIn, db: AsyncSession = Depends(get_db)):
     email = str(data.email).lower().strip()
 
-    user = (
-        await db.execute(select(User).where(User.email == email))
-    ).scalar_one_or_none()
+    user = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
 
     if user is None or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
@@ -89,9 +89,7 @@ async def login_oauth(
 ):
     email = data.username.lower().strip()
 
-    user = (
-        await db.execute(select(User).where(User.email == email))
-    ).scalar_one_or_none()
+    user = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
 
     if user is None or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
@@ -116,7 +114,11 @@ async def refresh_token(data: RefreshIn, db: AsyncSession = Depends(get_db)):
     ).scalar_one_or_none()
 
     now = datetime.now(timezone.utc)
-    if record is None or record.revoked_at is not None or record.expires_at.replace(tzinfo=timezone.utc) < now:
+    if (
+        record is None
+        or record.revoked_at is not None
+        or record.expires_at.replace(tzinfo=timezone.utc) < now
+    ):
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
     return {
@@ -126,10 +128,16 @@ async def refresh_token(data: RefreshIn, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/logout")
-async def logout(data: RefreshIn, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def logout(
+    data: RefreshIn, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+):
     token_hash = hash_token(data.refresh_token)
     record = (
-        await db.execute(select(RefreshToken).where(RefreshToken.token_hash == token_hash, RefreshToken.user_id == user.id))
+        await db.execute(
+            select(RefreshToken).where(
+                RefreshToken.token_hash == token_hash, RefreshToken.user_id == user.id
+            )
+        )
     ).scalar_one_or_none()
 
     if record is not None and record.revoked_at is None:
@@ -146,4 +154,3 @@ async def me(user: User = Depends(get_current_user)):
         "email": user.email,
         "display_name": user.display_name,
     }
-

@@ -1,10 +1,9 @@
 """Centralized entitlement checks. All premium decisions are enforced server-side."""
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.billing.models import Subscription
 from app.modules.users.models import User
-
-from app.modules.billing.entitlements import is_premium
 
 
 async def get_subscription(db: AsyncSession, user: User) -> Subscription:

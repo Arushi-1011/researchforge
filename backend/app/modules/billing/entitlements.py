@@ -1,4 +1,5 @@
 """Pure subscription-entitlement logic, kept independent for fast unit testing."""
+
 from datetime import datetime, timezone
 from typing import Any
 

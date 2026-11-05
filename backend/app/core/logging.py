@@ -1,4 +1,5 @@
 """Structured JSON logging with request-ID propagation via contextvars."""
+
 from __future__ import annotations
 import json
 import logging
@@ -6,6 +7,7 @@ import time
 from contextvars import ContextVar
 
 request_id_var: ContextVar[str] = ContextVar("request_id", default="-")
+
 
 class StructuredJsonFormatter(logging.Formatter):
     """Emit one JSON object per log record, always including timestamp and request_id."""
@@ -27,4 +29,3 @@ def configure_logging() -> None:
     handler = logging.StreamHandler()
     handler.setFormatter(StructuredJsonFormatter())
     logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
-

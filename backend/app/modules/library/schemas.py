@@ -1,4 +1,6 @@
 from pydantic import BaseModel, Field, HttpUrl
+
+
 class ImportPaperIn(BaseModel):
     source: str = Field(default="manual", max_length=40)
     source_id: str = Field(default="", max_length=300)
@@ -8,6 +10,8 @@ class ImportPaperIn(BaseModel):
     abstract: str = ""
     doi: str | None = None
     landing_url: HttpUrl | None = None
+
+
 class PaperOut(BaseModel):
     id: str
     project_id: str

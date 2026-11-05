@@ -1,4 +1,5 @@
 """Integration tests for RBAC, token rotation, rate limiting, and workspace isolation."""
+
 from __future__ import annotations
 
 import asyncio
@@ -9,15 +10,22 @@ from unittest.mock import AsyncMock, MagicMock
 try:
     from fastapi import HTTPException
 except ImportError:
+
     class HTTPException(Exception):  # type: ignore
         def __init__(self, status_code: int, detail: object = "", headers: dict | None = None):
             self.status_code = status_code
             self.detail = detail
             self.headers = headers or {}
 
+
 from app.core.deps import require_owner, require_editor, get_project_for_member
 from app.core.ratelimit import SlidingWindowLimiter
-from app.core.security import create_access_token, decode_access_token, create_refresh_token, hash_token
+from app.core.security import (
+    create_access_token,
+    decode_access_token,
+    create_refresh_token,
+    hash_token,
+)
 
 
 class MockUser:
@@ -46,6 +54,7 @@ class MockMembership:
 # 1. Token Lifecycle & Rotation Tests
 # ---------------------------------------------------------------------------
 
+
 def test_refresh_token_generation_and_hashing():
     uid = str(uuid.uuid4())
     raw_token, token_hash, expiry = create_refresh_token(uid, refresh_token_days=30)
@@ -65,6 +74,7 @@ def test_access_token_decode():
 # ---------------------------------------------------------------------------
 # 2. RBAC Enforcement Tests (OWNER vs EDITOR vs VIEWER)
 # ---------------------------------------------------------------------------
+
 
 def test_owner_can_access_owner_only_actions():
     project_id = uuid.uuid4()
@@ -171,6 +181,7 @@ def test_viewer_blocked_from_editor_actions():
 # 3. Multi-Tenant Workspace Isolation Tests
 # ---------------------------------------------------------------------------
 
+
 def test_non_member_cannot_access_workspace():
     project_id = uuid.uuid4()
     outsider = MockUser()
@@ -196,6 +207,7 @@ def test_non_member_cannot_access_workspace():
 # ---------------------------------------------------------------------------
 # 4. Rate Limiter Tests
 # ---------------------------------------------------------------------------
+
 
 def test_sliding_window_rate_limiter_enforces_capacity():
     limiter = SlidingWindowLimiter(max_requests=3, window_seconds=10.0)

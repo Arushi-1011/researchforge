@@ -7,6 +7,7 @@ the vector extension is available in Postgres.
 Design principle: the system degrades gracefully to lexical retrieval — no hard
 dependency on any ML runtime.
 """
+
 from __future__ import annotations
 
 import re
@@ -23,18 +24,45 @@ from typing import Any
 
 EMBED_DIM = 384
 _STOPWORDS = {
-    "the", "and", "for", "that", "this", "with", "from", "are", "was",
-    "were", "has", "have", "been", "not", "but", "can", "its", "also",
-    "which", "such", "than", "more", "into", "their", "they", "when",
-    "what", "will", "all", "each", "our", "these", "over", "used",
+    "the",
+    "and",
+    "for",
+    "that",
+    "this",
+    "with",
+    "from",
+    "are",
+    "was",
+    "were",
+    "has",
+    "have",
+    "been",
+    "not",
+    "but",
+    "can",
+    "its",
+    "also",
+    "which",
+    "such",
+    "than",
+    "more",
+    "into",
+    "their",
+    "they",
+    "when",
+    "what",
+    "will",
+    "all",
+    "each",
+    "our",
+    "these",
+    "over",
+    "used",
 }
 
 
 def _tokenize(text: str) -> list[str]:
-    return [
-        t for t in re.findall(r"[a-z]{3,}", text.lower())
-        if t not in _STOPWORDS
-    ]
+    return [t for t in re.findall(r"[a-z]{3,}", text.lower()) if t not in _STOPWORDS]
 
 
 def _hash_embed(text: str, dim: int = EMBED_DIM) -> list[float]:

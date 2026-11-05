@@ -1,4 +1,3 @@
-
 """External publication source adapters.
 
 Responses are normalized, never fabricated.
@@ -67,25 +66,19 @@ async def _get(
             response = await client.get(url, params=params)
 
             if response.status_code == 429:
-                retry_after = _retry_after_seconds(
-                    response.headers.get("Retry-After")
-                )
+                retry_after = _retry_after_seconds(response.headers.get("Retry-After"))
 
                 if retry_after is not None:
                     if retry_after > MAX_RETRY_AFTER_SECONDS:
                         wait_message = (
-                            f"The provider requested a wait of "
-                            f"{int(retry_after)} seconds."
+                            f"The provider requested a wait of {int(retry_after)} seconds."
                         )
                     else:
                         wait_message = (
-                            f"Retry after approximately "
-                            f"{max(1, int(retry_after))} seconds."
+                            f"Retry after approximately {max(1, int(retry_after))} seconds."
                         )
                 else:
-                    wait_message = (
-                        "The provider did not specify when requests can resume."
-                    )
+                    wait_message = "The provider did not specify when requests can resume."
 
                 raise SourceError(
                     f"HTTP 429: {url.split('/')[2]} is rate-limiting "
@@ -112,22 +105,20 @@ async def _get(
             # Retry only transient server errors.
             if exc.response.status_code < 500:
                 raise SourceError(
-                    f"{url.split('/')[2]} returned HTTP "
-                    f"{exc.response.status_code}."
+                    f"{url.split('/')[2]} returned HTTP {exc.response.status_code}."
                 ) from exc
 
             if attempt < MAX_ATTEMPTS - 1:
-                await asyncio.sleep(BACKOFF_BASE_SECONDS * (2 ** attempt))
+                await asyncio.sleep(BACKOFF_BASE_SECONDS * (2**attempt))
 
         except httpx.RequestError as exc:
             last_error = exc
 
             if attempt < MAX_ATTEMPTS - 1:
-                await asyncio.sleep(BACKOFF_BASE_SECONDS * (2 ** attempt))
+                await asyncio.sleep(BACKOFF_BASE_SECONDS * (2**attempt))
 
     raise SourceError(
-        f"Could not reach {url.split('/')[2]} after "
-        f"{MAX_ATTEMPTS} attempts: {last_error}"
+        f"Could not reach {url.split('/')[2]} after {MAX_ATTEMPTS} attempts: {last_error}"
     ) from last_error
 
 
@@ -137,9 +128,7 @@ class ArxivAdapter:
     async def search(self, query: str, limit: int) -> list[PaperResult]:
         async with httpx.AsyncClient(
             timeout=REQUEST_TIMEOUT,
-            headers={
-                "User-Agent": "ResearchForge/0.1 (academic research discovery)"
-            },
+            headers={"User-Agent": "ResearchForge/0.1 (academic research discovery)"},
         ) as client:
             response = await _get(
                 client,
@@ -159,9 +148,7 @@ class ArxivAdapter:
         results: list[PaperResult] = []
 
         for entry in root.findall("a:entry", ARXIV_NS):
-            ident = (
-                entry.findtext("a:id", default="", namespaces=ARXIV_NS)
-            ).strip()
+            ident = (entry.findtext("a:id", default="", namespaces=ARXIV_NS)).strip()
 
             title = re.sub(
                 r"\s+",
@@ -180,9 +167,7 @@ class ArxivAdapter:
                 for author in entry.findall("a:author", ARXIV_NS)
             ]
 
-            published = entry.findtext(
-                "a:published", default="", namespaces=ARXIV_NS
-            )
+            published = entry.findtext("a:published", default="", namespaces=ARXIV_NS)
             year = int(published[:4]) if published[:4].isdigit() else None
 
             pdf_url = next(
@@ -216,16 +201,11 @@ class SemanticScholarAdapter:
     name = "semantic_scholar"
 
     async def search(self, query: str, limit: int) -> list[PaperResult]:
-        fields = (
-            "title,authors,year,venue,citationCount,abstract,"
-            "externalIds,openAccessPdf,url"
-        )
+        fields = "title,authors,year,venue,citationCount,abstract,externalIds,openAccessPdf,url"
 
         async with httpx.AsyncClient(
             timeout=REQUEST_TIMEOUT,
-            headers={
-                "User-Agent": "ResearchForge/0.1 (academic research discovery)"
-            },
+            headers={"User-Agent": "ResearchForge/0.1 (academic research discovery)"},
         ) as client:
             response = await _get(
                 client,
@@ -240,9 +220,7 @@ class SemanticScholarAdapter:
         try:
             items = response.json().get("data", [])
         except (ValueError, AttributeError) as exc:
-            raise SourceError(
-                "Semantic Scholar returned invalid JSON."
-            ) from exc
+            raise SourceError("Semantic Scholar returned invalid JSON.") from exc
 
         results: list[PaperResult] = []
 
@@ -255,10 +233,7 @@ class SemanticScholarAdapter:
                     source=self.name,
                     source_id=str(item.get("paperId") or ""),
                     title=item.get("title") or "",
-                    authors=[
-                        author.get("name", "")
-                        for author in (item.get("authors") or [])
-                    ],
+                    authors=[author.get("name", "") for author in (item.get("authors") or [])],
                     year=item.get("year"),
                     venue=item.get("venue"),
                     citation_count=item.get("citationCount"),

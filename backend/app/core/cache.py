@@ -5,11 +5,11 @@ Provides TTL-based caching with graceful degradation:
 - Falls back to an in-process LRU cache with monotonic TTL eviction if Redis is unavailable.
 - Guarantees zero downtime and zero external dependencies in test environments.
 """
+
 from __future__ import annotations
 
-import json
 import time
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 from collections import OrderedDict
 
 T = TypeVar("T")

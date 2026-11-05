@@ -4,6 +4,7 @@ Applies financial signal-processing techniques (rolling velocity, cosine-similar
 matrices, portfolio scoring) to the paper collection in a project. No LLM is
 involved — all computations are deterministic and reproducible.
 """
+
 from __future__ import annotations
 import uuid
 
@@ -20,7 +21,12 @@ from app.modules.quant.analytics import (
     paper_similarity_matrix,
     research_portfolio_metrics,
 )
-from app.modules.quant.schemas import AnalyticsReport, SimilarityMatrix, TimelinePoint, PortfolioMetrics
+from app.modules.quant.schemas import (
+    AnalyticsReport,
+    SimilarityMatrix,
+    TimelinePoint,
+    PortfolioMetrics,
+)
 
 router = APIRouter(prefix="/projects/{project_id}/analytics", tags=["quant-analytics"])
 
@@ -41,7 +47,7 @@ async def full_analytics(
     user: User = Depends(get_current_user),
 ) -> AnalyticsReport:
     """Return a full quantitative analytics report for the project's paper library.
-    
+
     Equivalent to a portfolio risk report: publication time-series, pairwise
     similarity matrix, and composite portfolio health metrics.
     """
@@ -57,9 +63,15 @@ async def full_analytics(
     portfolio_raw = research_portfolio_metrics(papers)
     if not portfolio_raw:
         portfolio_raw = {
-            "paper_count": 0, "coverage_score": 0.0, "diversity_score": 0.0,
-            "recency_decay": 0.0, "mean_publication_year": 0.0, "publication_year_std": 0.0,
-            "velocity_signal": 0.0, "composite_score": 0.0, "signal": "NO_DATA",
+            "paper_count": 0,
+            "coverage_score": 0.0,
+            "diversity_score": 0.0,
+            "recency_decay": 0.0,
+            "mean_publication_year": 0.0,
+            "publication_year_std": 0.0,
+            "velocity_signal": 0.0,
+            "composite_score": 0.0,
+            "signal": "NO_DATA",
             "rationale": "Add papers to this project to generate analytics.",
             "numpy_available": False,
         }
@@ -109,9 +121,15 @@ async def portfolio_endpoint(
     raw = research_portfolio_metrics(papers)
     if not raw:
         raw = {
-            "paper_count": 0, "coverage_score": 0.0, "diversity_score": 0.0,
-            "recency_decay": 0.0, "mean_publication_year": 0.0, "publication_year_std": 0.0,
-            "velocity_signal": 0.0, "composite_score": 0.0, "signal": "NO_DATA",
+            "paper_count": 0,
+            "coverage_score": 0.0,
+            "diversity_score": 0.0,
+            "recency_decay": 0.0,
+            "mean_publication_year": 0.0,
+            "publication_year_std": 0.0,
+            "velocity_signal": 0.0,
+            "composite_score": 0.0,
+            "signal": "NO_DATA",
             "rationale": "Add papers to this project to generate analytics.",
             "numpy_available": False,
         }

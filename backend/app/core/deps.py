@@ -1,4 +1,5 @@
 """Authentication and project-membership dependencies."""
+
 from uuid import UUID
 
 from fastapi import Depends, HTTPException
@@ -84,4 +85,3 @@ async def require_editor(
     if membership is None or membership.role not in ("OWNER", "EDITOR"):
         raise HTTPException(403, "Viewers have read-only access to this workspace.")
     return project
-
