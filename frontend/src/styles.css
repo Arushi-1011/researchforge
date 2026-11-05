@@ -766,10 +766,11 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 14px;
 }
 
-.workspace-field input,
-.workspace-field select,
-.workspace-field textarea {
+.workspace-field > input,
+.workspace-field > select,
+.workspace-field > textarea {
   width: 100%;
+  min-width: 0;
   padding: 10px 14px;
   border: 1px solid var(--border-default);
   border-radius: 10px;
@@ -779,6 +780,13 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 13px;
   outline: none;
   transition: all 0.15s ease;
+}
+
+.workspace-field > input:focus,
+.workspace-field > select:focus,
+.workspace-field > textarea:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .workspace-field input:focus,
@@ -1793,6 +1801,8 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
   max-height: 280px;
   overflow-y: auto;
   padding-right: 4px;
@@ -1802,6 +1812,8 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  width: 100%;
+  min-width: 0;
   padding: 10px 12px;
   border: 1px solid var(--border-default);
   border-radius: 10px;
@@ -1815,25 +1827,37 @@ h1, h2, h3, h4, h5, h6 {
   border-color: #cbd5e1;
 }
 
-.workspace-check-row input {
-  margin-top: 3px;
+.workspace-check-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  padding: 0;
+  margin: 3px 0 0;
   accent-color: #4f46e5;
 }
 
 .workspace-check-row > span {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  width: 100%;
   min-width: 0;
 }
 
 .workspace-check-row strong {
+  display: block;
   font-size: 13px;
+  line-height: 1.5;
   color: #0f172a;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .workspace-check-row small {
+  display: block;
   font-size: 11px;
+  line-height: 1.5;
   color: var(--text-muted);
 }
 
