@@ -40,6 +40,8 @@ jobs:
 
       - name: Build React application
         working-directory: frontend
+        env:
+          VITE_API_BASE: https://researchforge-ivory.vercel.app/api/v1
         run: npm run build
 
       - name: Configure GitHub Pages
