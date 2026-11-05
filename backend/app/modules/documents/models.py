@@ -1,4 +1,5 @@
 """Persisted, template-generated project documents."""
+
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import DateTime, ForeignKey, String, Text
@@ -13,8 +14,12 @@ def utcnow() -> datetime:
 class ProjectDocument(Base):
     __tablename__ = "project_documents"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), index=True)
-    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     title: Mapped[str] = mapped_column(String(200))
     sections_json: Mapped[str] = mapped_column(Text)
     content_json: Mapped[str] = mapped_column(Text)

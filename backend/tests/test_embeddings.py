@@ -1,4 +1,5 @@
 """Tests for the semantic embedding utilities."""
+
 from __future__ import annotations
 
 try:

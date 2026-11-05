@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Literal
 
+
 class PaperResult(BaseModel):
     source: str
     source_id: str
@@ -14,10 +15,12 @@ class PaperResult(BaseModel):
     pdf_url: str | None = None
     landing_url: str | None = None
 
+
 class SearchResponse(BaseModel):
     query: str
     results: list[PaperResult]
     warnings: list[str] = []
+
 
 class SearchRequest(BaseModel):
     query: str = Field(min_length=2, max_length=300)

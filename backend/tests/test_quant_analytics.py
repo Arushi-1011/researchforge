@@ -2,6 +2,7 @@
 
 All functions are pure (no I/O, no DB); tested without any async infrastructure.
 """
+
 from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
@@ -10,16 +11,20 @@ from unittest.mock import MagicMock
 try:
     import pytest
 except ImportError:
+
     class _Approx:
         def __init__(self, val, abs=0.01):
             self.val = val
             self.abs = abs
+
         def __eq__(self, other):
             return abs(self.val - other) <= self.abs
+
     class FakePytest:
         @staticmethod
         def approx(val, abs=0.01):
             return _Approx(val, abs)
+
     pytest = FakePytest()
 
 from app.modules.quant.analytics import (
@@ -31,7 +36,9 @@ from app.modules.quant.analytics import (
 )
 
 
-def _paper(title: str, abstract: str = "", year: int | None = None, extracted: bool = False) -> MagicMock:
+def _paper(
+    title: str, abstract: str = "", year: int | None = None, extracted: bool = False
+) -> MagicMock:
     p = MagicMock()
     p.id = uuid.uuid4()
     p.title = title
@@ -93,7 +100,10 @@ class TestSimilarityMatrix:
 
     def test_matrix_is_symmetric(self) -> None:
         papers = [
-            _paper("Transformers", abstract="attention mechanism self-attention bert gpt language model"),
+            _paper(
+                "Transformers",
+                abstract="attention mechanism self-attention bert gpt language model",
+            ),
             _paper("CNNs", abstract="convolutional neural network image classification pooling"),
             _paper("RL agents", abstract="reinforcement learning reward policy gradient"),
         ]
@@ -125,12 +135,23 @@ class TestPortfolioMetrics:
         assert metrics["coverage_score"] == pytest.approx(0.5, abs=0.01)
 
     def test_signal_is_valid_value(self) -> None:
-        papers = [_paper(f"Paper {i}", abstract="test abstract content words", year=2020 + i) for i in range(5)]
+        papers = [
+            _paper(f"Paper {i}", abstract="test abstract content words", year=2020 + i)
+            for i in range(5)
+        ]
         metrics = research_portfolio_metrics(papers)
         assert metrics["signal"] in {"STRONG_BUY", "HOLD", "REBALANCE", "NO_DATA"}
 
     def test_composite_score_in_range(self) -> None:
-        papers = [_paper(f"P{i}", abstract="data science machine learning", year=2021 + i, extracted=(i % 2 == 0)) for i in range(4)]
+        papers = [
+            _paper(
+                f"P{i}",
+                abstract="data science machine learning",
+                year=2021 + i,
+                extracted=(i % 2 == 0),
+            )
+            for i in range(4)
+        ]
         metrics = research_portfolio_metrics(papers)
         assert 0.0 <= metrics["composite_score"] <= 100.0
 
@@ -148,8 +169,14 @@ class TestPortfolioMetrics:
 
         # Perturb diversity weight +20% and coverage -20%
         perturbed = compute_composite_score(
-            coverage=0.8, diversity=0.7, decay=0.9, velocity_signal=0.5,
-            w_cov=20.0, w_div=42.0, w_rec=25.0, w_vel=15.0
+            coverage=0.8,
+            diversity=0.7,
+            decay=0.9,
+            velocity_signal=0.5,
+            w_cov=20.0,
+            w_div=42.0,
+            w_rec=25.0,
+            w_vel=15.0,
         )
         # Difference should be bounded and proportional to factor delta: (0.7 * 7) - (0.8 * 5) = 4.9 - 4.0 = +0.9
         assert abs(perturbed - base) < 5.0

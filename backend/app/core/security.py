@@ -1,4 +1,5 @@
 """Password hashing and signed access tokens."""
+
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -40,9 +41,7 @@ def hash_token(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
-def create_refresh_token(
-    user_id: str, refresh_token_days: int = 30
-) -> tuple[str, str, datetime]:
+def create_refresh_token(user_id: str, refresh_token_days: int = 30) -> tuple[str, str, datetime]:
     raw = secrets.token_urlsafe(32)
     hashed = hash_token(raw)
     expiry = datetime.now(timezone.utc) + timedelta(days=refresh_token_days)

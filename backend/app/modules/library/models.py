@@ -1,4 +1,5 @@
 """Persisted research-paper records attached to projects."""
+
 import uuid
 from datetime import datetime, timezone
 
@@ -37,7 +38,5 @@ class LibraryPaper(Base):
     extracted_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     extraction_status: Mapped[str] = mapped_column(String(20), default="pending")
     page_count: Mapped[int | None] = mapped_column(nullable=True)
-    extracted_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    extracted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

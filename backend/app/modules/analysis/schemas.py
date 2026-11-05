@@ -1,4 +1,5 @@
 """Request validation for comparisons and research-gap notes."""
+
 from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
