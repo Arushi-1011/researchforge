@@ -162,7 +162,7 @@ async def identify_gaps(
     data: PaperSelection,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     await premium_user(project_id, db, user)
     papers = await load_papers(project_id, data.paper_ids, db)
     return await run_feature(
@@ -181,7 +181,7 @@ async def save_generated_gaps(
     data: SaveGapsIn,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     await premium_user(project_id, db, user)
     record = (
         await db.execute(
@@ -224,7 +224,7 @@ async def ai_compare(
     data: PaperSelection,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     await premium_user(project_id, db, user)
     if len(set(data.paper_ids)) < 2:
         raise HTTPException(422, "AI comparison requires at least two distinct papers")
@@ -247,7 +247,7 @@ async def recommendations(
     data: RecommendationsIn,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     await premium_user(project_id, db, user)
     papers = await load_papers(project_id, data.paper_ids or None, db)
     return await run_feature(
@@ -266,7 +266,7 @@ async def citation_analysis(
     data: PaperSelection,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     await premium_user(project_id, db, user)
     papers = await load_papers(project_id, data.paper_ids, db)
     # Only locally stored metadata is used; no citation metrics are fabricated.
@@ -307,7 +307,7 @@ async def ask_papers(
     data: QuestionIn,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     await premium_user(project_id, db, user)
     papers = await load_papers(project_id, data.paper_ids or None, db)
     # Bounded lexical retrieval: select sentences that overlap question terms; no vector embeddings are created.

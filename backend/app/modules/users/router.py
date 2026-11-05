@@ -1,6 +1,7 @@
 """Registration, login, and current-user endpoints."""
 
 from datetime import datetime, timezone
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -27,7 +28,7 @@ class RefreshIn(BaseModel):
 
 
 @router.post("/register", status_code=201)
-async def register(data: RegisterIn, db: AsyncSession = Depends(get_db)):
+async def register(data: RegisterIn, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
     email = str(data.email).lower().strip()
 
     if (
@@ -62,7 +63,7 @@ async def register(data: RegisterIn, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login")
-async def login(data: LoginIn, db: AsyncSession = Depends(get_db)):
+async def login(data: LoginIn, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
     email = str(data.email).lower().strip()
 
     user = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
@@ -86,7 +87,7 @@ async def login(data: LoginIn, db: AsyncSession = Depends(get_db)):
 async def login_oauth(
     data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, Any]:
     email = data.username.lower().strip()
 
     user = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
@@ -107,7 +108,7 @@ async def login_oauth(
 
 
 @router.post("/refresh")
-async def refresh_token(data: RefreshIn, db: AsyncSession = Depends(get_db)):
+async def refresh_token(data: RefreshIn, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
     token_hash = hash_token(data.refresh_token)
     record = (
         await db.execute(select(RefreshToken).where(RefreshToken.token_hash == token_hash))
@@ -130,7 +131,7 @@ async def refresh_token(data: RefreshIn, db: AsyncSession = Depends(get_db)):
 @router.post("/logout")
 async def logout(
     data: RefreshIn, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
-):
+) -> dict[str, Any]:
     token_hash = hash_token(data.refresh_token)
     record = (
         await db.execute(
@@ -148,7 +149,7 @@ async def logout(
 
 
 @router.get("/me")
-async def me(user: User = Depends(get_current_user)):
+async def me(user: User = Depends(get_current_user)) -> dict[str, Any]:
     return {
         "id": str(user.id),
         "email": user.email,

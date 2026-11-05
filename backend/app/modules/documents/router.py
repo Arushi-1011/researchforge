@@ -5,6 +5,7 @@ import re
 import uuid
 from datetime import datetime, timezone
 from io import BytesIO
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy import select
@@ -39,7 +40,7 @@ def slugify(value: str) -> str:
 
 async def build_content(
     project_id: uuid.UUID, title: str, sections: list[str], include_ai: bool, db: AsyncSession
-) -> dict:
+) -> dict[str, Any]:
     project = (await db.execute(select(Project).where(Project.id == project_id))).scalar_one()
     papers = list(
         (
@@ -87,9 +88,9 @@ async def build_content(
             .scalars()
             .all()
         )
-    result_sections = []
+    result_sections: list[dict[str, Any]] = []
     for key in sections:
-        section = {
+        section: dict[str, Any] = {
             "key": key,
             "title": SECTION_TITLES[key],
             "kind": "list",
@@ -173,7 +174,7 @@ async def build_content(
     }
 
 
-def serialize(doc: ProjectDocument) -> dict:
+def serialize(doc: ProjectDocument) -> dict[str, Any]:
     return {
         "id": str(doc.id),
         "project_id": str(doc.project_id),
@@ -190,7 +191,7 @@ async def create_document(
     data: DocumentCreate,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     await require_editor(project_id, user, db)
     content = await build_content(project_id, data.title, data.sections, data.include_ai, db)
     document = ProjectDocument(
@@ -214,7 +215,7 @@ async def list_documents(
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     await get_project_for_member(project_id, user, db)
     if limit < 1 or limit > 100 or offset < 0:
         raise HTTPException(422, "limit must be 1–100 and offset must be non-negative")
@@ -255,7 +256,7 @@ async def document_detail(
     document_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     await get_project_for_member(project_id, user, db)
     doc = await get_document(project_id, document_id, db)
     return {**serialize(doc), "content": json.loads(doc.content_json)}

@@ -3,6 +3,7 @@
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +20,7 @@ UPLOAD_ROOT = Path(settings.storage_dir).resolve() / "uploads"
 MAX_PDF_BYTES = 25 * 1024 * 1024
 
 
-def serialize(p: LibraryPaper) -> dict:
+def serialize(p: LibraryPaper) -> dict[str, Any]:
     return {
         "id": str(p.id),
         "project_id": str(p.project_id),
@@ -43,7 +44,7 @@ async def list_library(
     project_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-):
+) -> list[dict[str, Any]]:
     await get_project_for_member(project_id, user, db)
     rows = await db.execute(
         select(LibraryPaper)
@@ -59,7 +60,7 @@ async def import_paper(
     data: ImportPaperIn,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-):
+) -> dict[str, Any]:
     await require_editor(project_id, user, db)
     if data.source_id:
         existing = (
@@ -97,7 +98,7 @@ async def upload_pdf(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-):
+) -> dict[str, Any]:
     await require_editor(project_id, user, db)
     if (
         not file.filename
@@ -135,7 +136,7 @@ async def extract_paper(
     paper_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-):
+) -> dict[str, Any]:
     """Extract and persist selectable text from a PDF uploaded to this project."""
     await require_editor(project_id, user, db)
     result = await db.execute(
@@ -180,7 +181,7 @@ async def get_extraction(
     paper_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-):
+) -> dict[str, Any]:
     """Read previously extracted text; only project members can access it."""
     await get_project_for_member(project_id, user, db)
     result = await db.execute(

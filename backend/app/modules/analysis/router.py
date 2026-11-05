@@ -1,6 +1,7 @@
 """Project-scoped comparisons, comparison matrix, and research-gap notes. No AI calls."""
 
 import uuid
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +15,7 @@ from app.modules.analysis.schemas import ComparisonCreate, GapCreate, GapUpdate
 router = APIRouter(prefix="/projects/{project_id}", tags=["compare-and-gaps"])
 
 
-def gap_out(gap: ResearchGap) -> dict:
+def gap_out(gap: ResearchGap) -> dict[str, Any]:
     return {
         "id": str(gap.id),
         "project_id": str(gap.project_id),
@@ -48,7 +49,7 @@ async def create_comparison(
     data: ComparisonCreate,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     """Save a comparison of at least two papers from this project."""
     await require_editor(project_id, user, db)
     papers = (
@@ -86,7 +87,7 @@ async def list_comparisons(
     offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     await get_project_for_member(project_id, user, db)
     comparisons = (
         (
@@ -132,7 +133,7 @@ async def comparison_matrix(
     comparison_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     """Return a deterministic, data-backed matrix; missing fields remain empty, never inferred."""
     await get_project_for_member(project_id, user, db)
     comparison = await get_comparison(project_id, comparison_id, db)
@@ -193,7 +194,7 @@ async def create_gap(
     data: GapCreate,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     await require_editor(project_id, user, db)
     if data.comparison_id is not None:
         await get_comparison(project_id, data.comparison_id, db)
@@ -219,7 +220,7 @@ async def list_gaps(
     offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     await get_project_for_member(project_id, user, db)
     query = select(ResearchGap).where(ResearchGap.project_id == project_id)
     if status:
@@ -243,7 +244,7 @@ async def update_gap(
     data: GapUpdate,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     await require_editor(project_id, user, db)
     gap = (
         await db.execute(

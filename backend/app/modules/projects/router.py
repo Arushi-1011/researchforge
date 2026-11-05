@@ -1,6 +1,7 @@
 """Project CRUD and member management; project data is hidden from non-members."""
 
 from uuid import UUID
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -32,7 +33,7 @@ class RoleUpdateIn(BaseModel):
 async def list_projects(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     rows = (
         await db.execute(
             select(Project, func.count(ProjectMember.user_id).label("members"))
@@ -58,7 +59,7 @@ async def create_project(
     data: ProjectIn,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     p = Project(name=data.name.strip(), description=data.description, created_by=user.id)
     db.add(p)
     await db.flush()
@@ -72,7 +73,7 @@ async def project_detail(
     project_id: UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     p = await get_project_for_member(project_id, user, db)
     return {"id": str(p.id), "name": p.name, "description": p.description}
 
@@ -83,7 +84,7 @@ async def update_project(
     data: ProjectIn,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     p = await require_owner(project_id, user, db)
     p.name = data.name.strip()
     p.description = data.description
@@ -107,7 +108,7 @@ async def members(
     project_id: UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     await get_project_for_member(project_id, user, db)
     rows = (
         await db.execute(
@@ -133,7 +134,7 @@ async def add_member(
     data: MemberIn,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     await require_editor(project_id, user, db)
     target = (
         await db.execute(select(User).where(User.email == data.email.lower().strip()))
@@ -195,7 +196,7 @@ async def update_member_role(
     data: RoleUpdateIn,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> dict:
+) -> dict[str, Any]:
     await require_owner(project_id, user, db)
     new_role = data.role.upper().strip()
     if new_role not in ("OWNER", "EDITOR", "VIEWER"):
